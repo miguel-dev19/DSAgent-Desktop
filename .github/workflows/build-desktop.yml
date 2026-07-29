@@ -7,6 +7,8 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout
@@ -24,26 +26,13 @@ jobs:
     - name: Build Windows MSI
       run: ./gradlew :desktop:createDistributable
       
+    - name: Listar archivos generados
+      run: dir desktop\build\compose\binaries\main\msi /s
+      
     - name: Upload Windows Installer
       uses: actions/upload-artifact@v4
       with:
         name: DSAgent-Windows
-        path: desktop/build/compose/binaries/main/msi/*.msi
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v1.4.${{ github.run_number }}
-        name: DSAgent Desktop v1.4.${{ github.run_number }}
-        body: |
-          ## DSAgent Desktop para Windows
-          
-          **Build:** ${{ github.run_number }}
-          
-          ### Instalacion
-          1. Descargar **DSAgent-Windows.msi**
-          2. Ejecutar instalador
-          3. Abrir DSAgent desde el menu inicio
-        files: desktop/build/compose/binaries/main/msi/*.msi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: |
+          desktop/build/compose/binaries/**/*.msi
+          desktop/build/compose/binaries/**/*.exe
