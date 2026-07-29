@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "DSAgent-Desktop"
-include(":desktop")

@@ -1,3 +1,5 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 plugins {
     kotlin("jvm") version "1.9.20"
     id("org.jetbrains.compose") version "1.5.10"
@@ -18,25 +20,13 @@ compose.desktop {
         mainClass = "com.dsagent.MainKt"
         
         nativeDistributions {
-            targetFormats(
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
-                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg
-            )
+            targetFormats(TargetFormat.Msi)
             packageName = "DSAgent"
             packageVersion = "1.4.0"
             
             windows {
                 menuGroup = "DSAgent"
                 upgradeUuid = "d5a1b2c3-1234-5678-9abc-def012345678"
-            }
-            
-            linux {
-                packageName = "dsagent"
-            }
-            
-            macOS {
-                bundleID = "com.dsagent.desktop"
             }
         }
     }

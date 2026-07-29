@@ -24,15 +24,19 @@ jobs:
       uses: gradle/gradle-build-action@v2
       
     - name: Build Windows MSI
-      run: ./gradlew :desktop:createDistributable
+      run: ./gradlew createDistributable
       
-    - name: Listar archivos generados
-      run: dir desktop\build\compose\binaries\main\msi /s
+    - name: Buscar archivos generados
+      run: |
+        echo "=== Buscando .msi ==="
+        Get-ChildItem -Path build -Recurse -Filter *.msi -ErrorAction SilentlyContinue
+        echo "=== Buscando .exe ==="
+        Get-ChildItem -Path build -Recurse -Filter *.exe -ErrorAction SilentlyContinue
+        echo "=== Estructura build ==="
+        Get-ChildItem -Path build -Recurse -Depth 4 -ErrorAction SilentlyContinue
       
-    - name: Upload Windows Installer
+    - name: Upload Installer
       uses: actions/upload-artifact@v4
       with:
         name: DSAgent-Windows
-        path: |
-          desktop/build/compose/binaries/**/*.msi
-          desktop/build/compose/binaries/**/*.exe
+        path: build/compose/binaries/**/*
