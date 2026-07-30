@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,11 +43,8 @@ fun main() = application {
     
     val scrollState = rememberLazyListState()
     
-    LaunchedEffect(Unit) {
-        client.createSession()
-    }
+    LaunchedEffect(Unit) { client.createSession() }
     
-    // Auto-scroll
     LaunchedEffect(streamedText, messages.size) {
         if (messages.isNotEmpty() || streamedText.isNotEmpty()) {
             scrollState.animateScrollToItem(scrollState.layoutInfo.totalItemsCount - 1)
@@ -67,9 +63,7 @@ fun main() = application {
         streamedText = ""
         errorMessage = null
         
-        if (chatTitle == "Nuevo Chat") {
-            chatTitle = msg.take(40)
-        }
+        if (chatTitle == "Nuevo Chat") chatTitle = msg.take(40)
         
         CoroutineScope(Dispatchers.IO).launch {
             var fullResponse = ""
@@ -86,21 +80,10 @@ fun main() = application {
                         isStreaming = false
                         streamedText = ""
                         thinkingText = ""
-                        
-                        // Guardar en historial
-                        historyManager.saveChat(
-                            ChatHistory(
-                                id = client.getSessionId() ?: "",
-                                title = chatTitle,
-                                lastMessage = fullResponse.take(80)
-                            )
-                        )
+                        historyManager.saveChat(ChatHistory(id = client.getSessionId() ?: "", title = chatTitle, lastMessage = fullResponse.take(80)))
                         history = historyManager.loadHistory()
                     }
-                    is StreamEvent.Error -> {
-                        errorMessage = event.message
-                        isStreaming = false
-                    }
+                    is StreamEvent.Error -> { errorMessage = event.message; isStreaming = false }
                 }
             }
         }
@@ -115,89 +98,49 @@ fun main() = application {
             val bg = if (darkTheme) DarkBackground else White
             
             Column(modifier = Modifier.fillMaxSize().background(bg)) {
-                // Barra superior
                 Surface(modifier = Modifier.fillMaxWidth(), color = if (darkTheme) DarkSurface else White, shadowElevation = 2.dp) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { showHistory = !showHistory }) {
                             Icon(Icons.Outlined.Menu, "Historial", if (darkTheme) DarkTextLight else DarkText)
                         }
                         
-                        Text(
-                            chatTitle, style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (darkTheme) DarkTextLight else DarkText,
-                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-                        )
+                        Text(chatTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            color = if (darkTheme) DarkTextLight else DarkText, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
                         
                         IconButton(onClick = {
-                            messages = emptyList()
-                            streamedText = ""
-                            thinkingText = ""
-                            chatTitle = "Nuevo Chat"
-                            errorMessage = null
-                            client.createSession()
-                        }) {
-                            Icon(Icons.Outlined.Edit, "Nuevo chat", LightBlue)
-                        }
+                            messages = emptyList(); streamedText = ""; thinkingText = ""
+                            chatTitle = "Nuevo Chat"; errorMessage = null; client.createSession()
+                        }) { Icon(Icons.Outlined.Add, "Nuevo chat", LightBlue) }
                         
                         IconButton(onClick = { darkTheme = !darkTheme }) {
-                            Icon(
-                                if (darkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
-                                "Tema", GrayText
-                            )
+                            Icon(if (darkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode, "Tema", GrayText)
                         }
                     }
                 }
                 
-                // Panel lateral + Chat
                 Row(modifier = Modifier.weight(1f)) {
-                    // Panel historial
                     if (showHistory) {
-                        Surface(
-                            modifier = Modifier.width(260.dp).fillMaxHeight(),
-                            color = if (darkTheme) DarkSurface else White,
-                            shadowElevation = 2.dp
-                        ) {
+                        Surface(modifier = Modifier.width(260.dp).fillMaxHeight(), color = if (darkTheme) DarkSurface else White, shadowElevation = 2.dp) {
                             Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Historial", fontWeight = FontWeight.Bold, fontSize = 14.sp,
-                                    color = if (darkTheme) DarkTextLight else DarkText)
+                                Text("Historial", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (darkTheme) DarkTextLight else DarkText)
                                 Spacer(Modifier.height(8.dp))
                                 Divider()
-                                
-                                if (history.isEmpty()) {
-                                    Text("Sin conversaciones", color = GrayText, fontSize = 12.sp,
-                                        modifier = Modifier.padding(top = 16.dp))
-                                } else {
-                                    LazyColumn {
-                                        items(history) { chat ->
-                                            Surface(
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
-                                                    .clickable { /* Cargar chat */ },
-                                                color = Color.Transparent
-                                            ) {
-                                                Column(modifier = Modifier.padding(8.dp)) {
-                                                    Text(chat.title, fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                                                        color = if (darkTheme) DarkTextLight else DarkText,
-                                                        maxLines = 1)
-                                                    Text(chat.lastMessage, fontSize = 11.sp, color = GrayText, maxLines = 1)
-                                                }
-                                            }
+                                if (history.isEmpty()) Text("Sin conversaciones", color = GrayText, fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
+                                else LazyColumn { items(history) { chat ->
+                                    Surface(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp).clickable { }, color = Color.Transparent) {
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            Text(chat.title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (darkTheme) DarkTextLight else DarkText, maxLines = 1)
+                                            Text(chat.lastMessage, fontSize = 11.sp, color = GrayText, maxLines = 1)
                                         }
                                     }
-                                }
+                                }}
                             }
                         }
                     }
                     
-                    // Area chat
                     Column(modifier = Modifier.weight(1f)) {
-                        if (errorMessage != null) {
-                            Surface(modifier = Modifier.fillMaxWidth(), color = ErrorRed.copy(alpha = 0.1f)) {
-                                Text(errorMessage!!, modifier = Modifier.padding(8.dp), color = ErrorRed, fontSize = 12.sp)
-                            }
+                        if (errorMessage != null) Surface(modifier = Modifier.fillMaxWidth(), color = ErrorRed.copy(alpha = 0.1f)) {
+                            Text(errorMessage!!, modifier = Modifier.padding(8.dp), color = ErrorRed, fontSize = 12.sp)
                         }
                         
                         if (messages.isEmpty() && !isStreaming) {
@@ -205,41 +148,26 @@ fun main() = application {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(Icons.Outlined.Forum, null, Modifier.size(64.dp), LightBlue.copy(alpha = 0.5f))
                                     Spacer(Modifier.height(16.dp))
-                                    Text("En que puedo ayudarte?", fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                                        color = if (darkTheme) DarkTextLight else DarkText)
+                                    Text("En que puedo ayudarte?", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (darkTheme) DarkTextLight else DarkText)
                                     Spacer(Modifier.height(8.dp))
                                     Text("Escribe tu pregunta", fontSize = 14.sp, color = GrayText)
                                 }
                             }
                         } else {
-                            LazyColumn(
-                                state = scrollState,
-                                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
+                            LazyColumn(state = scrollState, modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 items(messages) { msg ->
                                     when (msg) {
                                         is ChatMessage.User -> UserBubble(msg.text)
                                         is ChatMessage.AI -> AIResponse(msg.text)
                                     }
                                 }
-                                
                                 if (isThinking) item { ThinkingIndicator() }
                                 if (streamedText.isNotEmpty()) item { AIResponse(streamedText) }
                                 item { Spacer(Modifier.height(8.dp)) }
                             }
                         }
                         
-                        ChatInput(
-                            messageText = currentMessage,
-                            onMessageChange = { currentMessage = it },
-                            onSend = { sendMessage() },
-                            isStreaming = isStreaming,
-                            thinkingEnabled = thinkingEnabled,
-                            onToggleThinking = { thinkingEnabled = !thinkingEnabled },
-                            searchEnabled = searchEnabled,
-                            onToggleSearch = { searchEnabled = !searchEnabled }
-                        )
+                        ChatInput(currentMessage, { currentMessage = it }, { sendMessage() }, isStreaming, thinkingEnabled, { thinkingEnabled = !thinkingEnabled }, searchEnabled, { searchEnabled = !searchEnabled })
                     }
                 }
             }

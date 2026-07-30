@@ -86,10 +86,7 @@ fun CodeBlockView(code: String, language: String) {
 
 @Composable
 fun ThinkingIndicator() {
-    Row(
-        modifier = Modifier.padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = LightBlue, strokeWidth = 2.dp)
         Spacer(Modifier.width(8.dp))
         Text("Pensando...", color = LightBlue, fontSize = 12.sp)
@@ -148,25 +145,37 @@ fun ChatInput(
             
             // Botones debajo
             Row(modifier = Modifier.padding(top = 6.dp)) {
-                FilterChip(
-                    selected = thinkingEnabled,
+                Surface(
                     onClick = onToggleThinking,
-                    label = { Text("Pensar", fontSize = 11.sp) },
-                    leadingIcon = { Icon(Icons.Outlined.Psychology, null, Modifier.size(14.dp)) },
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                FilterChip(
-                    selected = searchEnabled,
+                    modifier = Modifier.padding(end = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (thinkingEnabled) LightBlue.copy(alpha = 0.12f) else LightGray,
+                    border = BorderStroke(1.dp, if (thinkingEnabled) LightBlue.copy(alpha = 0.4f) else GrayBorder)
+                ) {
+                    Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Psychology, null, Modifier.size(14.dp), tint = if (thinkingEnabled) LightBlue else GrayText)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Pensar", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = if (thinkingEnabled) LightBlue else GrayText)
+                    }
+                }
+                
+                Surface(
                     onClick = onToggleSearch,
-                    label = { Text("Buscar", fontSize = 11.sp) },
-                    leadingIcon = { Icon(Icons.Outlined.Language, null, Modifier.size(14.dp)) }
-                )
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (searchEnabled) LightBlue.copy(alpha = 0.12f) else LightGray,
+                    border = BorderStroke(1.dp, if (searchEnabled) LightBlue.copy(alpha = 0.4f) else GrayBorder)
+                ) {
+                    Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Language, null, Modifier.size(14.dp), tint = if (searchEnabled) LightBlue else GrayText)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Buscar", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = if (searchEnabled) LightBlue else GrayText)
+                    }
+                }
             }
         }
     }
 }
 
-// Markdown parser
 sealed class MarkdownBlock {
     data class Text(val text: String) : MarkdownBlock()
     data class Code(val code: String, val language: String) : MarkdownBlock()
@@ -182,9 +191,7 @@ fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
             val before = text.substring(lastIndex, match.range.first)
             if (before.isNotBlank()) blocks.add(MarkdownBlock.Text(cleanInlineMarkdown(before)))
         }
-        val language = match.groupValues[1].ifEmpty { "code" }
-        val code = match.groupValues[2].trim()
-        blocks.add(MarkdownBlock.Code(code, language))
+        blocks.add(MarkdownBlock.Code(match.groupValues[2].trim(), match.groupValues[1].ifEmpty { "code" }))
         lastIndex = match.range.last + 1
     }
     
@@ -193,10 +200,7 @@ fun parseMarkdownBlocks(text: String): List<MarkdownBlock> {
         if (after.isNotBlank()) blocks.add(MarkdownBlock.Text(cleanInlineMarkdown(after)))
     }
     
-    if (blocks.isEmpty() && text.isNotBlank()) {
-        blocks.add(MarkdownBlock.Text(cleanInlineMarkdown(text)))
-    }
-    
+    if (blocks.isEmpty() && text.isNotBlank()) blocks.add(MarkdownBlock.Text(cleanInlineMarkdown(text)))
     return blocks
 }
 
