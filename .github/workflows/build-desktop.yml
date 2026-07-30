@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
       
     - name: Setup JDK 17
       uses: actions/setup-java@v4
@@ -26,17 +28,31 @@ jobs:
     - name: Build Windows MSI
       run: ./gradlew createDistributable
       
-    - name: Buscar archivos generados
+    - name: Get version
+      id: version
       run: |
-        echo "=== Buscando .msi ==="
-        Get-ChildItem -Path build -Recurse -Filter *.msi -ErrorAction SilentlyContinue
-        echo "=== Buscando .exe ==="
-        Get-ChildItem -Path build -Recurse -Filter *.exe -ErrorAction SilentlyContinue
-        echo "=== Estructura build ==="
-        Get-ChildItem -Path build -Recurse -Depth 4 -ErrorAction SilentlyContinue
+        $count = (git rev-list --count HEAD)
+        echo "VERSION=v1.4.$count" >> $env:GITHUB_OUTPUT
       
-    - name: Upload Installer
-      uses: actions/upload-artifact@v4
+    - name: Rename MSI
+      run: |
+        $msi = Get-ChildItem -Path build -Recurse -Filter *.msi | Select-Object -First 1
+        Copy-Item $msi.FullName "DSAgent-Desktop-${{ steps.version.outputs.VERSION }}.msi"
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
       with:
-        name: DSAgent-Windows
-        path: build/compose/binaries/**/*
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        name: DSAgent Desktop ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## DSAgent Desktop para Windows
+          
+          **Version:** ${{ steps.version.outputs.VERSION }}
+          
+          ### Instalacion
+          1. Descargar el archivo .msi
+          2. Ejecutar instalador
+          3. Abrir DSAgent desde Menu Inicio
+        files: DSAgent-Desktop-${{ steps.version.outputs.VERSION }}.msi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
