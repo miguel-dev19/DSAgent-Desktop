@@ -28,31 +28,21 @@ jobs:
     - name: Build Windows MSI
       run: ./gradlew createDistributable
       
+    - name: Find MSI file
+      run: |
+        echo "=== Buscando todos los archivos en build ==="
+        Get-ChildItem -Path build -Recurse -Depth 5 | Where-Object { $_.Name -like "*.msi" -or $_.Name -like "*.exe" }
+        echo "=== Listando estructura ==="
+        Get-ChildItem -Path build -Recurse -Depth 4
+        
     - name: Get version
       id: version
       run: |
         $count = (git rev-list --count HEAD)
         echo "VERSION=v1.4.$count" >> $env:GITHUB_OUTPUT
       
-    - name: Rename MSI
-      run: |
-        $msi = Get-ChildItem -Path build -Recurse -Filter *.msi | Select-Object -First 1
-        Copy-Item $msi.FullName "DSAgent-Desktop-${{ steps.version.outputs.VERSION }}.msi"
-      
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
+    - name: Upload MSI as artifact
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: ${{ steps.version.outputs.VERSION }}
-        name: DSAgent Desktop ${{ steps.version.outputs.VERSION }}
-        body: |
-          ## DSAgent Desktop para Windows
-          
-          **Version:** ${{ steps.version.outputs.VERSION }}
-          
-          ### Instalacion
-          1. Descargar el archivo .msi
-          2. Ejecutar instalador
-          3. Abrir DSAgent desde Menu Inicio
-        files: DSAgent-Desktop-${{ steps.version.outputs.VERSION }}.msi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: DSAgent-Installer
+        path: build/**/*.msi
